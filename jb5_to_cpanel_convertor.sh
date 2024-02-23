@@ -126,19 +126,27 @@ function create_mysql_file() {
     done
 }
 
-function create_email_account() {
+function create_email_accounts() {
     BACKUP_EMAIL_PATH=$1
     DESTINATION_EMAIL_PATH=$2
-    DOMAIN_USER=$( cat $CPANEL_DIRECTORY/cp/$ACCOUNT_NAME | grep -Po '(?<=DNS=)([A-Za-z0-9-.]+)')
 
-    echo "Creating email accounts for $DOMAIN_USER"
+    echo "Creating email accounts..."
 
-    for JSON_FILE in $(ls $BACKUP_EMAIL_PATH | grep -iE "\.conf$"); do
-        PASSWORD=$(cat $BACKUP_EMAIL_PATH/$JSON_FILE | grep -Po '(?<=,"password":")([a-zA-Z0-9\=,]+)')
-        DECODED_PASSWORD=$(echo $PASSWORD | base64 --decode )
-        printf $DOMAIN_USER:$DECODED_PASSWORD >> $DESTINATION_EMAIL_PATH/$DOMAIN_USER/shadow
-  done
+    for JSON_FILE in $(ls $BACKUP_EMAIL_PATH/*.conf); do
+        EMAIL=$(basename "$JSON_FILE" .conf)
+        DOMAIN=$(echo "$EMAIL" | cut -d "@" -f 2)
+        DOMAIN_USER=$(echo "$EMAIL" | cut -d "@" -f 1)
+
+        echo "Domain: $DOMAIN"
+        echo "Account: $DOMAIN_USER"
+
+        PASSWORD=$(grep -Po '(?<=,"password":")([a-zA-Z0-9\=,]+)' "$JSON_FILE" | base64 --decode)
+        echo "$DOMAIN_USER:$PASSWORD" >> "$DESTINATION_EMAIL_PATH/$DOMAIN/shadow"
+    done
+
+    echo "Email accounts created successfully."
 }
+
 
 FILE_PATH=$1
 DES_PATH=$2
@@ -262,7 +270,7 @@ fi
 
 if [[ -d $JB5_BACKUP/email ]]; then
   move_dir "$JB5_BACKUP/email" "$CPANEL_DIRECTORY/homedir/mail"
-  [[ -d $JB5_BACKUP/jetbackup.configs/email ]] && create_email_account "$JB5_BACKUP/jetbackup.configs/email" "$CPANEL_DIRECTORY/homedir/etc" "$ACCOUNT_NAME"
+  [[ -d $JB5_BACKUP/jetbackup.configs/email ]] && create_email_accounts "$JB5_BACKUP/jetbackup.configs/email" "$CPANEL_DIRECTORY/homedir/etc" "$ACCOUNT_NAME"
 fi
 
 [[ -d $JB5_BACKUP/ftp ]] && create_ftp_account "$JB5_BACKUP/ftp" "$CPANEL_DIRECTORY"
