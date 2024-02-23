@@ -4,6 +4,9 @@
 #
 # ** USE AT YOUR OWN RISK ** 
 #
+# Uso: chmod +x jb5_to_cpanel_convertor.sh
+# ./jb5_to_cpanel_convertor.sh archivo_de_jetbackup5.tar.gz archivo_de_cpanel.tar.gz
+#
 
 function print_help {
   echo "
